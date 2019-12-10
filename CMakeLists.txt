@@ -8,6 +8,8 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
 add_executable(getPlatformsDevices source/getPlatformsDevices.cpp)
 add_executable(example_1 source/example_1.cpp)
+add_executable(euler source/euler.cpp)
 
 target_link_libraries(getPlatformsDevices OpenCL sycl)
 target_link_libraries(example_1 OpenCL sycl)
+target_link_libraries(euler OpenCL sycl)
