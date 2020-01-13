@@ -1,5 +1,5 @@
-#include<CL/sycl.hpp>
-#include<iostream>
+#include <CL/sycl.hpp>
+#include <iostream>
 
 #define SIZE 1024
 
@@ -26,13 +26,13 @@ double sburstf(double x, double aval, double bval, double atval, double btval)
 
 int main()
 {
-//	queue myQueue(cpu_selector{});
-	queue myQueue(gpu_selector{});
+	queue myQueue(cpu_selector{});
+//	queue myQueue(gpu_selector{});
 	auto dev = myQueue.get_device();
 	auto ctxt = myQueue.get_context();
 	std::cout << "Selected device: " << myQueue.get_device().get_info<info::device::name>() << std::endl;
 
-	constexpr int num_orbits = 1;
+	constexpr int num_orbits = 10000;
 	constexpr int num_eq = 6;
 	constexpr int num_params = 6;
 
@@ -66,7 +66,7 @@ int main()
 	double t = 0;
 	for (int iter = 0; iter<time_steps; iter++) {
 //		std::cout << "Iter: " << iter << std::endl;
-		t = t + dt;
+		t = t+dt;
 
 		myQueue.submit([&](handler& h) {
 		  h.parallel_for<class broomhead>(range<1>(num_orbits), [=](id<1> i) {

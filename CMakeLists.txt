@@ -6,6 +6,8 @@ project(SODECL-oneAPI)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
 
+include(dependencies/CMakeLists.txt)
+
 add_executable(getPlatformsDevices source/getPlatformsDevices.cpp)
 add_executable(example_1 source/example_1.cpp)
 add_executable(euler source/euler.cpp)
