@@ -1,6 +1,9 @@
 #include <CL/sycl.hpp>
 #include <iostream>
 
+#include "cxxplot.hpp"
+#include "Timer.hpp"
+
 #define SIZE 1024
 
 #define T1 0.15
@@ -40,10 +43,6 @@ int main()
 	double* yout = (double*) malloc_shared(num_orbits*num_eq*sizeof(double), dev, ctxt);
 	double* params = (double*) malloc_shared(num_orbits*num_params*sizeof(double), dev, ctxt);
 
-//	double* y = (double*) malloc_host(num_orbits*num_eq*sizeof(double), ctxt);
-//	double* yout = (double*) malloc_host(num_orbits*num_eq*sizeof(double), ctxt);
-//	double* params = (double*) malloc_host(num_orbits*num_params*sizeof(double), ctxt);
-
 	for (int i = 0; i<num_orbits; i++) {
 		for (int j = 0; j<num_eq; j++) {
 			y[i*num_eq+j] = 0;
@@ -61,8 +60,13 @@ int main()
 		params[i*num_params+5] = 9;
 	}
 
+	std::vector<double> output;
+
+	Chronos::Timer timer("timer1");
+	timer.start();
+
 	double dt = 0.00001;
-	int time_steps = 0.1/0.00001;
+	double time_steps = 1.0/0.00001;
 	double t = 0;
 	for (int iter = 0; iter<time_steps; iter++) {
 //		std::cout << "Iter: " << iter << std::endl;
@@ -117,19 +121,25 @@ int main()
 		});
 		myQueue.wait();
 
-//		std::cout << "y: " << y[0] << std::endl;
+		output.push_back(yout[0]);
 	}
 
-	for (int i = 0; i<num_orbits; i++) {
-		for (int j = 0; j<num_eq; j++) {
-			std::cout << yout[i*num_eq+j] << std::endl;
-		}
-	}
-	std::cout << "Simulation time: " << t << std::endl;
+//	for (int i = 0; i<num_orbits; i++) {
+//		for (int j = 0; j<num_eq; j++) {
+//			std::cout << yout[i*num_eq+j] << std::endl;
+//		}
+//	}
+
+	timer.stop_timer(true);
 
 	free(y, ctxt);
 	free(yout, ctxt);
 	free(params, ctxt);
+
+	cxxplot::Plot<double> plot(output);
+	plot.set_xlabel("x label");
+	plot.set_ylabel("y label");
+	plot.show_plot();
 
 	return 0;
 }

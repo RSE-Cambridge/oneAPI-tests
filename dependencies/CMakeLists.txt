@@ -14,6 +14,15 @@ else ()
     message(FATAL_ERROR "PYTHON3 NOT FOUND")
 endif ()
 
-find_package(cxxplot REQUIRED)
-message(STATUS "cxxplot include dir: " ${cxxplot_INCLUDE_DIRS})
-message(STATUS "cxxplot libraries: " ${cxxplot_LIBRARIES})
+include(FetchContent)
+FetchContent_Declare(Chronos
+        GIT_REPOSITORY http://github.com/avramidis/chronos.git
+        GIT_TAG origin/master)
+FetchContent_MakeAvailable(Chronos)
+
+include(FetchContent)
+FetchContent_Declare(cxxplot
+        GIT_REPOSITORY http://github.com/avramidis/cxxplot.git
+        GIT_TAG origin/master)
+
+FetchContent_MakeAvailable(cxxplot)
