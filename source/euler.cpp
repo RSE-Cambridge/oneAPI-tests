@@ -3,6 +3,8 @@
 
 #define SIZE 1024
 
+#include "cxxplot.hpp"
+
 using namespace cl::sycl;
 
 int main()
@@ -84,11 +86,18 @@ int main()
 
 	auto result = yout.get_access<access::mode::read>();
 
+	std::vector<double> output;
 	for (int i = 0; i<N; i++) {
 		for (int j = 0; j<N; j++) {
 			std::cout << result[i][j] << std::endl;
+			output.push_back(result[i][j]);
 		}
 	}
+
+	cxxplot::Plot<double> plot(output);
+	plot.set_xlabel("x label");
+	plot.set_ylabel("y label");
+	plot.show_plot();
 
 	return 0;
 }
