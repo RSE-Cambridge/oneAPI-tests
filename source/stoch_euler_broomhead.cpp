@@ -5,6 +5,8 @@
 #include "Timer.hpp"
 
 #include "mkl_rng_sycl.hpp"
+#include "mkl_sycl.hpp"
+#include "mkl.h"
 
 #define SIZE 1024
 
@@ -63,7 +65,7 @@ int main()
 	}
 
 	mkl::rng::philox4x32x10 engine(myQueue, 0); // basic random number generator object
-	mkl::rng::gaussian<double, mkl::rng::box_muller2> distr(0.0, 1.0); //  distribution object
+	//mkl::rng::gaussian<double, mkl::rng::box_muller2> distr(0.0, 1.0); //  distribution object
 
 	const size_t n = 10000;
 	std::vector<double> r(n);
@@ -118,11 +120,11 @@ int main()
 		});
 		myQueue.wait();
 
-		{
-			//create buffer for random numbers
-			cl::sycl::buffer<double, 1> r_buf(r.data(), cl::sycl::range<1>{n});
-			mkl::rng::generate(distr, engine, n, r_buf); // perform generation
-		}
+//		{
+//			//create buffer for random numbers
+//			cl::sycl::buffer<double, 1> r_buf(r.data(), cl::sycl::range<1>{n});
+//			mkl::rng::generate(distr, engine, n, r_buf); // perform generation
+//		}
 
 		myQueue.submit([&](handler& h) {
 		  double dt = 0.00001;
@@ -135,7 +137,7 @@ int main()
 		});
 		myQueue.wait();
 
-		output.push_back(yout[0]);
+		output.push_back(0);
 	}
 
 //	for (int i = 0; i<num_orbits; i++) {

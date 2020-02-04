@@ -24,5 +24,4 @@ include(FetchContent)
 FetchContent_Declare(cxxplot
         GIT_REPOSITORY http://github.com/avramidis/cxxplot.git
         GIT_TAG origin/master)
-
 FetchContent_MakeAvailable(cxxplot)
