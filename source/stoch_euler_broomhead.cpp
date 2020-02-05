@@ -39,9 +39,9 @@ int main()
 	auto ctxt = myQueue.get_context();
 	std::cout << "Selected device: " << myQueue.get_device().get_info<info::device::name>() << std::endl;
 
-	constexpr int num_orbits = 10000;
-	constexpr int num_eq = 6;
-	constexpr int num_params = 6;
+	int num_orbits = 10000;
+	int num_eq = 6;
+	int num_params = 6;
 
 	double* y = (double*) malloc_shared(num_orbits*num_eq*sizeof(double), dev, ctxt);
 	double* yout = (double*) malloc_shared(num_orbits*num_eq*sizeof(double), dev, ctxt);
@@ -65,18 +65,21 @@ int main()
 	}
 
 	mkl::rng::philox4x32x10 engine(myQueue, 0); // basic random number generator object
-	//mkl::rng::gaussian<double, mkl::rng::box_muller2> distr(0.0, 1.0); //  distribution object
+	mkl::rng::gaussian<double, mkl::rng::box_muller2> distr(0.0, 1.0); //  distribution object
 
-	const size_t n = 10000;
+	size_t n = num_orbits*num_eq;
 	std::vector<double> r(n);
 
 	std::vector<double> output;
+
+	//create buffer for random numbers
+	cl::sycl::buffer<double, 1> r_buf(r.data(), cl::sycl::range<1>{n});
 
 	Chronos::Timer timer("timer1");
 	timer.start();
 
 	double dt = 0.00001;
-	double time_steps = 1.0/0.00001;
+	double time_steps = 0.01/0.00001;
 	double t = 0;
 	for (int iter = 0; iter<time_steps; iter++) {
 //		std::cout << "Iter: " << iter << std::endl;
@@ -109,22 +112,21 @@ int main()
 		});
 		myQueue.wait();
 
+		mkl::rng::generate(distr, engine, n, r_buf); // perform generation
+		myQueue.wait();
+		auto r_accessor = r_buf.template get_access<cl::sycl::access::mode::read>();
+
 		myQueue.submit([&](handler& h) {
 
 		  h.parallel_for<class euler>(range<1>(num_orbits), [=](id<1> i) {
 
 			for (int ieq = 0; ieq<num_eq; ieq++) {
-				yout[i[0]*num_eq+ieq] = y[i[0]*num_eq+ieq]+yout[i[0]*num_eq+ieq]*dt;
+				yout[i[0]*num_eq+ieq] = y[i[0]*num_eq+ieq]+yout[i[0]*num_eq+ieq]*dt
+						+yout[i[0]*num_eq+ieq]*cl::sycl::sqrt(dt)*r_accessor[i[0]*num_eq+ieq]*0.01;
 			}
 		  });
 		});
 		myQueue.wait();
-
-//		{
-//			//create buffer for random numbers
-//			cl::sycl::buffer<double, 1> r_buf(r.data(), cl::sycl::range<1>{n});
-//			mkl::rng::generate(distr, engine, n, r_buf); // perform generation
-//		}
 
 		myQueue.submit([&](handler& h) {
 		  double dt = 0.00001;
@@ -137,7 +139,13 @@ int main()
 		});
 		myQueue.wait();
 
-		output.push_back(0);
+		output.push_back(y[0]);
+	}
+
+	auto r_accessor = r_buf.template get_access<cl::sycl::access::mode::read>();
+	std::cout << "first " << 60000 << " numbers of " << n << ": " << std::endl;
+	for (int i = 0; i<10; i++) {
+		std::cout << r_accessor[i] << " ";
 	}
 
 //	for (int i = 0; i<num_orbits; i++) {
@@ -148,14 +156,12 @@ int main()
 
 	timer.stop_timer(true);
 
+	cxxplot::Plot<double> plot(output);
+	plot.show_plot();
+
 	free(y, ctxt);
 	free(yout, ctxt);
 	free(params, ctxt);
-
-	cxxplot::Plot<double> plot(output);
-	plot.set_xlabel("x label");
-	plot.set_ylabel("y label");
-	plot.show_plot();
 
 	return 0;
 }
